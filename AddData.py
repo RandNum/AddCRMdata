@@ -18,24 +18,7 @@ def authTest():
 #authTest()
 
 
-def relayPOSTRequest():
-    jsonData = [{
-        "factName": "mostSearched",
-        "factTtl": "65000000",
-        "properties": {}
-        }]
 
-    url = 'https://api.relay42.com/v1/site-1151/profiles/2001/facts?partnerId=1151&forceInsert=false'
-
-    headers = {"content-type":"application/json"}
-    # call get service with headers and params
-    response = requests.post(url, json=jsonData, headers=headers, auth=HTTPBasicAuth(user, pw))
-
-    print("code:" + str(response.status_code))
-    print("headers:" + str(response.headers))
-    print("content:" + str(response.text))
-
-relayPOSTRequest()
 
 
 def parseCSV():
@@ -44,6 +27,49 @@ def parseCSV():
     with open(filepath, newline='') as csvfile:
         csvData = csv.reader(csvfile, delimiter=';')
         for row in csvData:
-            print(', '.join(row))
+            pid = row[0]
+            dest = row[1]
+            org = row[2]
+
+    thisJSONObj = convertToAPIFormat(pid, dest, org)
+    return thisJSONObj
 
 #parseCSV()
+
+
+def convertToAPIFormat(a, b, c):
+    csvList = [{
+        "factName": "mostSearched",
+        "factTtl": "65000000",
+        "properties":{"PartnerID":a,
+                      "Dest":b,
+                      "Orig":c}
+            }]
+
+
+    return csvList
+
+
+def relayPOSTRequest():
+    jsonData = [{
+        "factName": "mostSearched",
+        "factTtl": "65000000",
+        "properties": {"this":"that",
+                       "this":"that"}
+        }]
+
+
+    newJSONData = parseCSV()
+    print(newJSONData)
+
+    url = 'https://api.relay42.com/v1/site-1151/profiles/2001/facts?partnerId=1151&forceInsert=false'
+
+    headers = {"content-type":"application/json"}
+    # call get service with headers and params
+    response = requests.post(url, json=newJSONData, headers=headers, auth=HTTPBasicAuth(user, pw))
+
+    print("code: " + str(response.status_code))
+    print("headers: " + str(response.headers))
+    print("content: " + str(response.text))
+
+relayPOSTRequest()
