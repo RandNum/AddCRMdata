@@ -4,9 +4,10 @@ import os
 from requests.auth import HTTPBasicAuth
 from ratelimit import limits, RateLimitException
 from backoff import on_exception, expo
+import UserPass
 
-user = "wiggins2000@gmail.com"
-pw = "Deadalus82$$"
+myuser = UserPass.myusername
+mypw = UserPass.mypassword
 
 FIVE_MINUTES = 300
 
@@ -37,7 +38,7 @@ def AddFactToProfile():
             headers = {"content-type":"application/json"}
             # call get service with headers and params
             print("Adding Fact to PID " + pid)
-            response = requests.post(url2, json=JSONData, headers=headers, auth=HTTPBasicAuth(user, pw))
+            response = requests.post(url2, json=JSONData, headers=headers, auth=HTTPBasicAuth(myuser, mypw))
             if response.status_code != 200:
                 raise Exception('API response: {}'.format(response.status_code))
             print("code: " + str(response.status_code))
