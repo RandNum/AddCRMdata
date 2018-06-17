@@ -1,3 +1,8 @@
+__author__ = "Bryan C. Wiggins"
+__maintainer__ = "Bryan Wiggins"
+__email__ = "wiggins2000@gmail.com"
+
+
 import requests
 import csv
 import os
@@ -5,7 +10,6 @@ from requests.auth import HTTPBasicAuth
 from ratelimit import limits, RateLimitException
 from backoff import on_exception, expo
 from threading import Timer
-from time import sleep
 import UserPass
 
 myuser = UserPass.myusername
@@ -13,18 +17,17 @@ mypw = UserPass.mypassword
 
 FIVE_MINUTES = 300
 
-#currentPosition = 1
 
-@on_exception(expo, RateLimitException, max_tries=8)
-@limits(calls=100, period=FIVE_MINUTES)
 class AddFactToProfile():
-    classVar = 0
-    def __init__(self):
-        AddFactToProfile.classVar = 1
 
+    def __init__(self):
+        self.classVar = 0
+        self.rt = RepeatedTimer(10, self.getProgress)
+
+    @on_exception(expo, RateLimitException, max_tries=8)
+    @limits(calls=100, period=FIVE_MINUTES)
     def addData(self):
-        print("parsing CSV file")
-        filepath = os.path.join('/Users/laptop/Desktop/Relay42/FactDataForTCAssignment/', 'generatedDataFile_small_5.csv')
+        # filepath = os.path.join('testData', 'generatedDataFile_small_5.csv')
         filepathBig = os.path.join('/Users/laptop/Desktop/Relay42/FactDataForTCAssignment/', 'generatedDataFile_225000.csv')
 
         with open(filepathBig, newline='') as csvfile:
@@ -37,29 +40,26 @@ class AddFactToProfile():
                 JSONData = [{
                     "factName": "mostSearched",
                     "factTtl": "65000000",
-                    "properties":{"PartnerID":pid,
-                                  "Dest":dest,
-                                  "Orig":org}
-                        }]
-
-                #global currentPosition
-                #currentPosition += 1
-                AddFactToProfile.classVar += 1
-                #print(currentPosition)
+                    "properties": {"PartnerID": pid,
+                                   "Dest": dest,
+                                   "Orig": org}
+                }]
 
                 url2 = "https://api.relay42.com/v1/site-1151/profiles/2001/facts?partnerId=" + pid + "&forceInsert=false"
 
-                headers = {"content-type":"application/json"}
+                headers = {"content-type": "application/json"}
                 # call get service with headers and params
-                #print("Adding Fact to PID " + pid)
                 response = requests.post(url2, json=JSONData, headers=headers, auth=HTTPBasicAuth(myuser, mypw))
                 if response.status_code != 200:
                     raise Exception('API response: {}'.format(response.status_code))
-                #print("code: " + str(response.status_code))
-                #print("headers: " + str(response.headers))
-                #print("content: " + str(response.text))
+                # print("code: " + str(response.status_code))
+                else:
+                    self.classVar = self.classVar + 1
+                # print("headers: " + str(response.headers))
+                # print("content: " + str(response.text))
 
-#AddFactToProfile()
+    def getProgress(self):
+        print("At row " + str(self.classVar) + "...")
 
 
 class RepeatedTimer(object):
@@ -88,14 +88,10 @@ class RepeatedTimer(object):
         self.is_running = False
 
 
-def getProgress(a):
-    print("At row " + a)
-
-
 print("starting upload of data...")
-rt = RepeatedTimer(5, getProgress, str(AddFactToProfile.classVar)) # it auto-starts, no need of rt.start()
+a = AddFactToProfile()  #autostarts
 try:
-    a = AddFactToProfile() #Long running process of adding fact data
+    #Long running process of adding fact data
     a.addData()
 finally:
-    rt.stop()
+    a.rt.stop()
